@@ -34,6 +34,7 @@
 ;; Part 2
 
 (defn db-entry->db-positional-entry
+  "Remap to naming scheme for part 2"
   [{:as db-entry :keys [letter-min letter-max letter password]}]
   {:first-idx  (dec letter-min)
    :second-idx (dec letter-max)
@@ -43,7 +44,6 @@
 
 (defn valid-positional-password?
   [{:as db-positional-entry :keys [first-idx second-idx letter password]}]
-  ;; remap attribute for identifiable names
   (let [either-or            not=
         char-at-idx-matches? (fn [idx] (= (nth password idx)
                                           letter))]
@@ -81,6 +81,13 @@
   #_=> 456
 
   ;; Part 2
+  (->> (util/file-as-seq "day2/input_sample.txt")
+       (map str->db-entry)
+       (map db-entry->db-positional-entry))
+  #_=> ({:first-idx 0, :second-idx 2, :letter \a, :password "abcde"}
+        {:first-idx 0, :second-idx 2, :letter \b, :password "cdefg"}
+        {:first-idx 1, :second-idx 8, :letter \c, :password "ccccccccc"})
+
   (->> (util/file-as-seq "day2/input_sample.txt")
        (map str->db-entry)
        (map db-entry->db-positional-entry)
