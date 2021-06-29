@@ -12,18 +12,24 @@
            (string/split #"\n\n"))
        (map #(string/split % #"\n"))))
 
-(def test-group-unique-yes
-  (comp ))
+;(->> lines
+;     (partition-by str/blank?)
+;     (remove #{'("")}))
 
-(defn group-unique-yes
-  "Count of unique questions answered yes within a group of answers"
+
+(defn unique-yes-answers
+  "unique questions answered yes within a group of answers"
   [group-answers]
   (->> group-answers
        (mapcat concat)
        distinct))
 
-(defn group-intersected-yes
-  "Count of questions answered yes for all answers"
+(def unique-yes-answers
+  (comp distinct
+        (partial mapcat concat)))
+
+(defn intersected-yes-answers
+  "questions answered yes for all answers"
   [group-answers]
   (->> group-answers
        (map set)
@@ -35,19 +41,19 @@
   (file-as-seq "day6/input_sample.txt")
 
 
-  (group-unique-yes ["a" "abc" "da"])
+  (unique-yes-answers ["a" "abc" "da"])
   #_=> (\a \b \c \d)
 
   ;; sample
   (->> (file-as-seq "day6/input_sample.txt")
-       (map group-unique-yes)
+       (map unique-yes-answers)
        (map count)
        (apply +))
   #_=> 11
 
   ;; part 1
   (->> (file-as-seq "day6/input.txt")
-       (map group-unique-yes)
+       (map unique-yes-answers)
        (map count)
        (apply +))
   #_=> 6506
@@ -62,5 +68,12 @@
        (map count)
        (apply +))
   #_=> 3243
+
+
+  (->> {:a 1 :b 2 :c 3}
+       (map (fn [[k v]] {k (inc v)}))
+       #_(apply merge)
+       (reduce merge)
+       )
 
   )
