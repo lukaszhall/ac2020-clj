@@ -2,6 +2,8 @@
 
 ![Clojure](https://img.shields.io/badge/Clojure-%23Clojure.svg?style=for-the-badge&logo=Clojure&logoColor=Clojure)
 [![CodeScene Code Health](https://codescene.io/projects/17906/status-badges/code-health)](https://codescene.io/projects/17906)
+[![CodeScene System Mastery](https://codescene.io/projects/17906/status-badges/system-mastery)](https://codescene.io/projects/17906)
+
 ## Installation
 
 Download from http://example.com/FIXME.
