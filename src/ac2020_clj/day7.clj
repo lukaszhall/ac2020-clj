@@ -2,8 +2,8 @@
   (:require [ac2020-clj.util :as util]
             [clojure.string :as string]))
 
+;;shiny gold bags contain 2 dark red bags.
 (def bagline-regex #"(\d+|^)(?: )?(\w+ \w+) bag")
-
 
 
 (defn parse-bagline
@@ -196,7 +196,7 @@
   #_=> 75
 
 
-  
+
   (let [graph     (->> (util/file-as-seq "day7/input.txt")
                        baglines=>container->'name->count')
         bag-freqs (bags-in-container->count graph "shiny gold")
