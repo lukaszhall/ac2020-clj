@@ -1,35 +1,16 @@
-(ns ac2020-clj.day7
+(ns ac2020-clj.day7-corelogic
+  (:refer-clojure :exclude [==])
   (:require [ac2020-clj.util :as util]
-            [clojure.string :as string]))
+            [ac2020-clj.day7 :as day7]
 
-;;shiny gold bags contain 2 dark red bags.
-;light red bags contain 1 bright white bag, 2 muted yellow bags.
-(def bagline-regex #"(\d+|^)(?: )?(\w+ \w+) bag")
+            [clojure.core.logic :as cl]
+            [clojure.core.logic.pldb :as cldb]))
 
-
-(defn parse-bagline
-  [s]
-  (let [matches               (re-seq bagline-regex s)
-        [_ _ container-name] (first matches)
-        contained-name->count (apply merge
-                                     (map (fn [[_ n contained-name]]
-                                            {contained-name (Integer/parseInt n)})
-                                          (rest matches)))]
-    {container-name contained-name->count}))
-
-
-
-;__________________            __
-;\_________________|) ____.---'--`---.____
-;              ||     \----.________.----/
-;              ||      / /    `--'
-;            __||_____/ /_
-;           |___          \
-;               `---------'
-(defn baglines=>container->'name->count'
+;; Graph Building
+(defn bagline-s->weighted-graph
   [bagline-s]
   (->> bagline-s
-       (map parse-bagline)
+       (map day7/parse-bagline)
        (apply merge)))
 
 
@@ -40,6 +21,24 @@
               {name (or (set (keys m))
                         #{})}))
        (apply merge)))
+
+;; Part 1
+
+#_(cldb/db-rel )
+
+
+(cl/run* [q r]
+         (cl/membero q [1 2 3])
+         (cl/membero r [1 2 3])
+         )
+
+(cl/fresh [q r]
+          (cl/membero q [1 2 3])
+          (cl/membero r [1 2 3])
+          )
+
+
+
 
 ;; Part 1 - BFS
 (def map-entry-key first)
@@ -88,26 +87,9 @@
 ;; Journal
 (comment
 
-  ;; Sample inputs
-  (util/file-as-seq "day7/input_sample.txt")
-  #_=> ["light red bags contain 1 bright white bag, 2 muted yellow bags."
-        "dark orange bags contain 3 bright white bags, 4 muted yellow bags."
-        "bright white bags contain 1 shiny gold bag."
-        "muted yellow bags contain 2 shiny gold bags, 9 faded blue bags."
-        "shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags."
-        "dark olive bags contain 3 faded blue bags, 4 dotted black bags."
-        "vibrant plum bags contain 5 faded blue bags, 6 dotted black bags."
-        "faded blue bags contain no other bags."
-        "dotted black bags contain no other bags."]
-
-  (re-seq bagline-regex "light red bags contain 1 bright white bag, 2 muted yellow bags.")
-  #_=> (["light red bag" "" "light red"] ["1 bright white bag" "1" "bright white"] ["2 muted yellow bag" "2" "muted yellow"])
-
-  (parse-bagline "light red bags contain 1 bright white bag, 2 muted yellow bags.")
-  #_=> {"light red" {"bright white" "1", "muted yellow" "2"}}
 
   (->> (util/file-as-seq "day7/input_sample.txt")
-       baglines=>container->'name->count')
+       bagline-s->weighted-graph)
   #_=> {"muted yellow" {"shiny gold" 2, "faded blue" 9},
         "light red"    {"bright white" 1, "muted yellow" 2},
         "dotted black" nil,
@@ -120,7 +102,7 @@
 
 
   (->> (util/file-as-seq "day7/input_sample.txt")
-       baglines=>container->'name->count'
+       bagline-s->weighted-graph
        weighted-graph->graph)
   #_=> {"muted yellow" #{"shiny gold" "faded blue"},
         "light red"    #{"muted yellow" "bright white"},
@@ -133,14 +115,14 @@
         "dark olive"   #{"dotted black" "faded blue"}}
 
   (-> (->> (util/file-as-seq "day7/input_sample.txt")
-           baglines=>container->'name->count'
+           bagline-s->weighted-graph
            weighted-graph->graph)
       (containers-of-bag "dotted black"))
   #_=> #{"muted yellow" "bright white" "shiny gold" "vibrant plum" "dark olive"}
 
   ;; Part 1
   (-> (->> (util/file-as-seq "day7/input.txt")
-           baglines=>container->'name->count'
+           bagline-s->weighted-graph
            weighted-graph->graph)
       (containers-of-bag "shiny gold")
       count)
@@ -148,7 +130,7 @@
 
   ;; Part 2
   (-> (->> (util/file-as-seq "day7/input_sample.txt")
-           baglines=>container->'name->count')
+           bagline-s->weighted-graph)
       (babushka-bag "muted yellow"))
   #_=> ["muted yellow"
         [["shiny gold"
@@ -182,7 +164,7 @@
          ["faded blue"]]]
 
   (-> (->> (util/file-as-seq "day7/input_sample.txt")
-           baglines=>container->'name->count')
+           bagline-s->weighted-graph)
       (babushka-bag "muted yellow")
       flatten
       frequencies)
@@ -190,7 +172,7 @@
 
 
   (->> (-> (->> (util/file-as-seq "day7/input_sample.txt")
-                baglines=>container->'name->count')
+                bagline-s->weighted-graph)
            (bags-in-container->count "muted yellow"))
        (reduce (fn [s [_ n]] (+ s n))
                0))
@@ -199,7 +181,7 @@
 
 
   (let [graph     (->> (util/file-as-seq "day7/input.txt")
-                       baglines=>container->'name->count')
+                       bagline-s->weighted-graph)
         bag-freqs (bags-in-container->count graph "shiny gold")
         bag-count (reduce (fn [s [_ n]]
                             (+ s n))

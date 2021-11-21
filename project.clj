@@ -5,6 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [
                  [org.clojure/clojure "1.10.3"]
+                 [org.clojure/core.logic "1.0.0"]
 
                  [org.clojure/test.check "0.10.0"]
                  [orchestra "2020.07.12-1"]
