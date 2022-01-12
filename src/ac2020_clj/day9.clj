@@ -35,7 +35,7 @@
     (loop [sum-start-idx 0
            sum-end-idx   0
            running-sum   0]
-      ;(println {:sum running-sum :start sum-start-idx :end sum-end-idx :diff (- invalid-number running-sum )})
+      ;(println {:sum running-sum :start sum-start-idx :end sum-end-idx :diff (- invalid-number running-sum)})
       (cond
         (= invalid-number running-sum) (subvec num-v sum-start-idx sum-end-idx)
 
@@ -45,14 +45,7 @@
 
         (< invalid-number running-sum) (recur (inc sum-start-idx)
                                               sum-end-idx
-                                              (- running-sum (nth num-v sum-start-idx)))
-
-        )
-      )
-
-    )
-
-  )
+                                              (- running-sum (nth num-v sum-start-idx)))))))
 
 
 (comment
@@ -106,6 +99,5 @@
       (#(+ (apply max %)
            (apply min %))))
   #_=> 36981213N
-
 
   )
