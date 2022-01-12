@@ -96,19 +96,16 @@
   "return all valid permuations of an adapter chain"
   [adapters]
   (loop [idx          (- (count adapters) 2)
-         valid-chains (conj '() adapters)
-         ]
-    (println valid-chains)
+         valid-chains (conj '() adapters)]
     (if (<= idx 0)
       valid-chains
       (let [valid-dropped-nth-chains (->> (mapv #(drop-nth-v idx %) valid-chains)
                                           (filterv valid-chain?))
             all-chains               (concat valid-chains valid-dropped-nth-chains)]
-        (println "-----------------------------")
-        (println (str "index: " idx))
-        (println (str "New Valid chains: " valid-dropped-nth-chains))
-        (println (str "All chains: " (into [] all-chains)))
-
+        ;(println "-----------------------------")
+        ;(println (str "index: " idx))
+        ;(println (str "New Valid chains: " valid-dropped-nth-chains))
+        ;(println (str "All chains: " (into [] all-chains)))
         (recur (dec idx)
                all-chains)))))
 
