@@ -59,8 +59,7 @@
       [adapters]
       (if (<= (count adapters) 2)
         1
-        (let [dropped-1st (drop-nth-v 1 adapters)
-              ]
+        (let [dropped-1st (drop-nth-v 1 adapters)]
           (if (not (valid-chain? dropped-1st))
             (variations-count (rest-v adapters))
             (+ (variations-count (rest-v adapters))
@@ -99,8 +98,8 @@
          valid-chains (conj '() adapters)]
     (if (<= idx 0)
       valid-chains
-      (let [valid-dropped-nth-chains (->> (mapv #(drop-nth-v idx %) valid-chains)
-                                          (filterv valid-chain?))
+      (let [valid-dropped-nth-chains (->> (map #(drop-nth-v idx %) valid-chains)
+                                          (filter valid-chain?))
             all-chains               (concat valid-chains valid-dropped-nth-chains)]
         ;(println "-----------------------------")
         ;(println (str "index: " idx))
@@ -114,18 +113,16 @@
 
   (do (def sample-input (->> (util/file-as-seq "day10/input_sample.txt")
                              (map #(Integer/parseInt %))))
-      sample-input)
-  #_=> '(16 10 15 5 1 11 7 19 6 12 4)
-
-  (do (def sample-input2 (->> (util/file-as-seq "day10/input_sample2.txt")
+      (def sample-input2 (->> (util/file-as-seq "day10/input_sample2.txt")
                               (map #(Integer/parseInt %))))
-      sample-input2)
-  #_=> '(28 33 18 42 31 14 46 20 48 47 24 23 49 45 19 38 39 11 1 32 25 35 8 17 7 9 4 2 34 10 3)
-
-  (do (def full-input (->> (util/file-as-seq "day10/input.txt")
+      (def full-input (->> (util/file-as-seq "day10/input.txt")
                            (map #(Integer/parseInt %))))
-      full-input)
-  #_=> '(104 83 142 123,,,,,,)
+      [sample-input
+       sample-input2
+       #_full-input])
+  #_=> ['(16 10 15 5 1 11 7 19 6 12 4)
+        '(28 33 18 42 31 14 46 20 48 47 24 23 49 45 19 38 39 11 1 32 25 35 8 17 7 9 4 2 34 10 3)]
+
 
 
   (->> sample-input
@@ -182,11 +179,13 @@
                          arranged-adapters))
   #_=> 19208
 
-  (variations-count (->> full-input
-                         arranged-adapters))
+  (time
+    (variations-count (->> full-input
+                           arranged-adapters)))
   #_=> 169255295254528
 
 
+  ;; Valid permutations
   (variations [0 1 4 5 6 8 11])
   #_=> '([0 1 4 5 6 8 11] [0 1 4 5 8 11] [0 1 4 6 8 11])
 
@@ -201,5 +200,15 @@
          [0 1 4 6 7 10 12 15 16 19 22]
          [0 1 4 7 10 11 12 15 16 19 22]
          [0 1 4 7 10 12 15 16 19 22])
+
+
+
+  (time
+    (do (count (variations (->> sample-input2
+                                arranged-adapters)))))
+
+  (time
+    (do (take 5 (variations (->> full-input
+                                 arranged-adapters)))))
 
   )
