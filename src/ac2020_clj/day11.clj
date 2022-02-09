@@ -26,7 +26,7 @@
         str-grid))
 
 (defn sym-grid->str-grid
-  "For display. Convert Sym grid to string grid. Inversion of str-grid->sym-grid"
+  "For display. Convert Sym grid to string grid array. Inversion of str-grid->sym-grid"
   [sym-grid]
   (mapv (fn [grid-row] (->> (map {'L \L
                                   '. \.
@@ -64,8 +64,7 @@
             neighbor-loc [(+ row dir-row) (+ col dir-col)]]
         (if-not (in-grid? sym-grid neighbor-loc)
           nil
-          (grid-val sym-grid neighbor-loc)))))
-  )
+          (grid-val sym-grid neighbor-loc))))))
 
 (def nearest-neighbors-fns (map nearest-neighbor-fn [[-1 -1]
                                                      [-1 0]
@@ -89,15 +88,10 @@
   "Get value of seat in it's next version"
   [sym-grid loc]
   (let [seat-val                (grid-val sym-grid loc)
-        ;_ (println seat-val)
         neighbors               (neighbors sym-grid loc nearest-neighbors-fns)
-        ;_                       (println neighbors)
         occupied-neighbor-count (->> neighbors
                                      (filter #(= % 'O))
-                                     count)
-        ;_ (println occupied-neighbor-count)
-        ;_ (println (str (>= occupied-neighbor-count 4)))
-        ]
+                                     count)]
     (case seat-val
       . '.
       L (if (zero? occupied-neighbor-count)
@@ -124,7 +118,7 @@
            (take-while (fn [[prev-iter next-iter]]
                          (not= prev-iter next-iter)))
            last)
-      first))
+      last))
 
 (defn occupied-count
   [sym-grid]
@@ -133,8 +127,52 @@
                  (->> grid-row
                       (filter #(= % 'O))
                       count))
-               sym-grid))
-  )
+               sym-grid)))
+
+
+;; ========== Part 2 ==================
+
+(defn seen-neighbor-fn
+  "Return neighbor function for first seen neighbor in a direction, where direction is [row col], else nil"
+  [direction]
+  (let [[dir-row dir-col] direction]
+    (fn [sym-grid loc]
+      (loop [next-loc loc]
+        (let [[row col] next-loc
+              neighbor-loc [(+ row dir-row) (+ col dir-col)]]
+          (if-not (in-grid? sym-grid neighbor-loc)
+            nil
+            (let [next-val (grid-val sym-grid neighbor-loc)]
+              (if-not (= next-val '.)
+                next-val
+                (recur neighbor-loc)))))))))
+
+(def seen-neighbors-fns (map seen-neighbor-fn [[-1 -1]
+                                               [-1 0]
+                                               [-1 1]
+                                               [0 1]
+                                               [1 1]
+                                               [1 0]
+                                               [1 -1]
+                                               [0 -1]]))
+
+(defn iterate-seat-p2
+  "Get value of seat in it's next version"
+  [sym-grid loc]
+  (let [seat-val                (grid-val sym-grid loc)
+        neighbors               (neighbors sym-grid loc seen-neighbors-fns)
+        occupied-neighbor-count (->> neighbors
+                                     (filter #(= % 'O))
+                                     count)]
+    (case seat-val
+      . '.
+      L (if (zero? occupied-neighbor-count)
+          'O
+          'L)
+      O (if (>= occupied-neighbor-count 5)
+          'L
+          'O))))
+
 
 (comment
 
@@ -167,6 +205,8 @@
         "LLLLLLLLLL"
         "L.LLLLLL.L"
         "L.LLLLL.LL"]
+
+
 
   ;; in-grid? test
   (let [grid-test input-sample]
@@ -213,7 +253,7 @@
   (iterate-seat-p1 input-sample [1 1])
   #_=> O
 
-  (iterate-grid input-sample iterate-seat-p1)
+  (iterated-grid iterate-seat-p1 input-sample)
   #_=> [[O . O O . O O . O O]
         [O O O O O O O . O O]
         [O . O . O . . O . .]
@@ -227,10 +267,89 @@
 
   (->> (stable-grid input-sample iterate-seat-p1)
        occupied-count)
+  #_=> 37
+
+  (time
+    (->> (stable-grid input iterate-seat-p1)
+         occupied-count))
+  ;; "Elapsed time: 5234.893267 msecs"
+  #_=> 2113
 
 
-  (def iter2 (iterated-grid iterate-seat-p1 input-sample))
 
-  (iterate-seat-p1 iter2 [0 9])
+  ;;--------------------------------------
+  ;; Part 2
+
+  ;; Problem sample 2a
+  (do (def input-sample-p2a (->> ".......#.\n...#.....\n.#.......\n.........\n..#L....#\n....#....\n.........\n#........\n...#....."
+                                 str/split-lines
+                                 str-grid->sym-grid))
+      input-sample-p2a)
+  #_=> [[. . . . . . . O .]
+        [. . . O . . . . .]
+        [. O . . . . . . .]
+        [. . . . . . . . .]
+        [. . O L . . . . O]
+        [. . . . O . . . .]
+        [. . . . . . . . .]
+        [O . . . . . . . .]
+        [. . . O . . . . .]]
+
+  (neighbors input-sample-p2a [4 3] seen-neighbors-fns)
+  #_=> [O O O O O O O O]
+
+
+  ;; Problem sample 2b
+  (do (def input-sample-p2b (->> ".............\n.L.L.#.#.#.#.\n............."
+                                 str/split-lines
+                                 str-grid->sym-grid))
+      input-sample-p2b)
+  #_=> [[. . . . . . . . . . . . .]
+        [. L . L . O . O . O . O .]
+        [. . . . . . . . . . . . .]]
+
+  (neighbors input-sample-p2b [1 1] seen-neighbors-fns)
+  #_=> [L]
+
+
+  ;; Problem sample 2c
+  (do (def input-sample-p2c (->> ".##.##.\n#.#.#.#\n##...##\n...L...\n##...##\n#.#.#.#\n.##.##."
+                                 str/split-lines
+                                 str-grid->sym-grid))
+      input-sample-p2c)
+  #_=> [[. O O . O O .]
+        [O . O . O . O]
+        [O O . . . O O]
+        [. . . L . . .]
+        [O O . . . O O]
+        [O . O . O . O]
+        [. O O . O O .]]
+
+  (neighbors input-sample-p2c [3 3] seen-neighbors-fns)
+  #_=> []
+
+  ;; Part 2 sample
+  (iterated-grid iterate-seat-p2 input-sample)
+  #_=> [[O . O O . O O . O O]
+        [O O O O O O O . O O]
+        [O . O . O . . O . .]
+        [O O O O . O O . O O]
+        [O . O O . O O . O O]
+        [O . O O O O O . O O]
+        [. . O . O . . . . .]
+        [O O O O O O O O O O]
+        [O . O O O O O O . O]
+        [O . O O O O O . O O]]
+
+  (->> (stable-grid input-sample iterate-seat-p2)
+       occupied-count)
+  #_=> 26
+
+
+  (time
+    (->> (stable-grid input iterate-seat-p2)
+         occupied-count))
+  "Elapsed time: 5412.919686 msecs"
+  #_=> 1865
   )
 
