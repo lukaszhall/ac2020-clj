@@ -10,6 +10,8 @@
                  [org.clojure/test.check "0.10.0"]
                  [orchestra "2020.07.12-1"]
 
+                 [io.github.nextjournal/clerk "0.5.346"]
+
                  ]
   :main ^:skip-aot ac2020-clj.core
   :target-path "target/%s"

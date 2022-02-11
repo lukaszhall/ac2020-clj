@@ -1,6 +1,19 @@
-(ns ac2020-clj.day11
+(ns ac2020-clj.day11-clerk
   (:require [ac2020-clj.util :as util]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [nextjournal.clerk :as clerk]))
+
+(clerk/set-viewers!
+  [{:pred      symbol?
+    :render-fn '#(v/html [:div.inline-block {:style {:width 16 :height 16}
+                                             :class (if (= 'L %) "bg-grey border-solid border-2 border-black"
+                                                                 (if (= 'O) "bg-black"
+                                                                            "bg-white border-solid border-2 border-black"))}])}
+   {:pred list?
+    :render-fn '#(v/html (into [:div.flex.flex-col] (v/inspect-children %2) %1))}
+   {:pred      #(and (vector? %)
+                     (not (map-entry? %)))
+    :render-fn '#(v/html (into [:div.flex.inline-flex] (v/inspect-children %2) %1))}])
 
 ;;sample input_sample
 (util/file-as-seq "day11/input_sample.txt")
@@ -66,9 +79,14 @@
           nil
           (grid-val sym-grid neighbor-loc))))))
 
-(def nearest-neighbors-fns (map nearest-neighbor-fn [[-1 -1] [-1 0] [-1 1]
-                                                     [0 -1] [0 1]
-                                                     [1 1] [1 0] [1 -1]]))
+(def nearest-neighbors-fns (map nearest-neighbor-fn [[-1 -1]
+                                                     [-1 0]
+                                                     [-1 1]
+                                                     [0 1]
+                                                     [1 1]
+                                                     [1 0]
+                                                     [1 -1]
+                                                     [0 -1]]))
 
 (defn neighbors
   "Find seq of all neighbors using the neighbor searching functions"
@@ -142,9 +160,14 @@
                 next-val
                 (recur neighbor-loc)))))))))
 
-(def seen-neighbors-fns (map seen-neighbor-fn [[-1 -1] [-1 0] [-1 1]
-                                               [0, -1] [0 1]
-                                               [1 1] [1 0] [1 -1]]))
+(def seen-neighbors-fns (map seen-neighbor-fn [[-1 -1]
+                                               [-1 0]
+                                               [-1 1]
+                                               [0 1]
+                                               [1 1]
+                                               [1 0]
+                                               [1 -1]
+                                               [0 -1]]))
 
 (defn iterate-seat-p2
   "Get value of seat in it's next version"
@@ -164,25 +187,31 @@
           'O))))
 
 
+;comment
+
+#_(clerk/serve! {:browse? true})
+#_(clerk/show! "src/ac2020_clj/day11_clerk.clj")
+
+
+(do (def input-sample (->> (util/file-as-seq "day11/input_sample.txt")
+                           str-grid->sym-grid))
+    (def input (->> (util/file-as-seq "day11/input.txt")
+                    str-grid->sym-grid))
+    input-sample
+    )
+;#_=> [[L . L L . L L . L L]
+;      [L L L L L L L . L L]
+;      [L . L . L . . L . .]
+;      [L L L L . L L . L L]
+;      [L . L L . L L . L L]
+;      [L . L L L L L . L L]
+;      [. . L . L . . . . .]
+;      [L L L L L L L L L L]
+;      [L . L L L L L L . L]
+;      [L . L L L L L . L L]]
+
+
 (comment
-
-  (do (def input-sample (->> (util/file-as-seq "day11/input_sample.txt")
-                             str-grid->sym-grid))
-      (def input (->> (util/file-as-seq "day11/input.txt")
-                      str-grid->sym-grid))
-      input-sample
-      )
-  #_=> [[L . L L . L L . L L]
-        [L L L L L L L . L L]
-        [L . L . L . . L . .]
-        [L L L L . L L . L L]
-        [L . L L . L L . L L]
-        [L . L L L L L . L L]
-        [. . L . L . . . . .]
-        [L L L L L L L L L L]
-        [L . L L L L L L . L]
-        [L . L L L L L . L L]]
-
 
   (sym-grid->str-grid input-sample)
   #_=> ["L.LL.LL.LL"
