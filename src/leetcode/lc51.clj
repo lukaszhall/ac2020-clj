@@ -20,8 +20,13 @@
 ;   1 <= n <= 9
 
 
-(defn spy [x] (println x) x)
-(defn spy-pp [x] (clojure.pprint/pprint x) x)
+(defn spy
+  ([x] (println x) x)
+  ([msg x] (println (str msg x)) x))
+
+(defn spy-pp
+  ([x] (clojure.pprint/pprint x) x)
+  ([msg x] (println msg) (clojure.pprint/pprint x) x))
 
 (defn- xy-diag
   "compute xy diagonal from x and y coords"
@@ -65,12 +70,31 @@
 
 (defn drawn-board
   "Return a visual string representation of a board"
-  [board]
-  (into [] (for [y (range (:size board))]
-             (into [] (for [x (range (:size board))]
-                        (cond
-                          (contains? (:queen-locs board) [x y]) (symbol "Q")
-                          :else (symbol ".")))))))
+  ([board]
+   (into [] (for [y (range (:size board))]
+              (into [] (for [x (range (:size board))]
+                         (cond
+                           (contains? (:queen-locs board) [x y]) (symbol "Q")
+                           :else (symbol ".")))))))
+  ([board other-locs]
+   (drawn-board board other-locs (symbol "*")))
+  ([board other-locs other-locs-sym]
+   (let [locs-set (into #{} other-locs)]
+     (into [] (for [y (range (:size board))]
+                (into [] (for [x (range (:size board))]
+                           (cond
+                             (contains? (:queen-locs board) [x y]) (symbol "Q")
+                             (contains? locs-set [x y]) (symbol "*")
+                             :else (symbol "."))))))
+
+     ))
+  )
+
+(defn drawn-board
+  "Return a visual string representation of a board, with additional locations
+  marked by the additional location symbol"
+
+  )
 
 
 (defn place-queen
@@ -99,33 +123,61 @@
                     :col-free     (line-free? board :cols x)
                     :xy-diag-free (line-free? board :xy-diag (xy-diag [x y]))
                     :yx-diag-free (line-free? board :yx-diag (yx-diag [x y]))}
-        _ (clojure.pprint/pprint free-row-m)
+        ;_          (clojure.pprint/pprint free-row-m)
+        ;_          (println [x y])
         no-hit?    (every? identity (vals free-row-m))]
     no-hit?))
 
 
+(defn safe-spaces
+  "Returns a vector of all board coordinates where a queen may be placed"
+  [board]
+  (into []
+        (for [row (range (:size board))
+              col (range (:size board))
+              :when (safe-space? board [col row])]
+          [col row])))
 
+
+(defn trial-boards
+  "Given a board with 0+ queens, returns a seq of boards with a valid newly placed queen"
+  [board]
+  (let [trial-spaces (safe-spaces board)
+        boards       (map (partial place-queen board) trial-spaces)]
+    boards))
 
 (defn dfs-nqueens
   "dfs search with constraint prop "
-  [n board]
-  (for [x (range n)]
-    (for [y (range n)]
-      [x y]
-      ))
+  [board]
+  #_(println "-------")
+  #_(println (str "dfs-nqueens for " board))
+  (if (= (count (:queen-locs board))
+         (:size board))
+    board
+    (let [test-boards     (trial-boards board)
+          ;_               (spy-pp "Test Boards: " test-boards)
+          searched-boards (map dfs-nqueens test-boards)]
+      #_(spy-pp "Searched Boards" searched-boards)
+      searched-boards)))
 
 
-  #_(loop [solns]
+(def dfs-nqueens
+  (memoize
+    (fn [board]
+      (if (= (count (:queen-locs board))
+             (:size board))
+        board
+        (let [test-boards     (trial-boards board)
+              searched-boards (map dfs-nqueens test-boards)]
+          searched-boards)))))
 
-      ;; enumerate
-      ;; place queen
-      ;; constraint prop
 
-      )
-
-  )
-
-
+(defn dfs-nqueens-clean
+  "cleaned results for dfs-nqueens search"
+  [board]
+  (->> (dfs-nqueens board)
+       flatten
+       distinct))
 
 (comment
 
@@ -169,10 +221,11 @@
         [. . . . . . . .]
         [. . . . . . . .]]
 
-
+  ;; disj-from-set-in-m
   (disj-from-set-in-m {:a-key #{1 2 3} :b 2 :c #{1 2}} :a-key 2)
   #_=> {:a-key #{1 3}, :b 2, :c #{1 2}}
 
+  ;; conj-to-set-in-m
   (conj-to-set-in-m {:a-key #{1 2 3} :b 2 :c #{1 2}} :a-key 4)
   #_=> {:a-key #{1 4 3 2}, :b 2, :c #{1 2}}
 
@@ -180,6 +233,7 @@
    (conj-to-set-in-m {:a 2} :a 3)]
   #_=> [{:a 1, :b #{3}} {:a #{3}}]
 
+  ;; drawn-board, basic for queens
   (-> (new-board 8)
       (place-queen [1 2])
       (place-queen [4 4])
@@ -201,6 +255,15 @@
            [. . . . . . . .]]]
 
 
+  ;; drawn-board, extra chars
+  (drawn-board (new-board 4) [[1 1] [3 0]])
+  #_=> [[. . . *]
+        [. * . .]
+        [. . . .]
+        [. . . .]]
+
+
+  ;; safe-space
   (-> (new-board 8)
       (place-queen [1 2])
       (place-queen [4 4])
@@ -209,28 +272,228 @@
              drawn-board
              #(safe-space? % [6 6])
              #(safe-space? % [2 0]))))
+  #_=> [{:size       8,
+         :rows       #{0 1 3 6 7},
+         :cols       #{0 2 3 5 7},
+         :xy-diag    #{0 1 2 4 5 6 7 9 10 12 13 14},
+         :yx-diag    #{-7 -6 -5 -4 -3 -2 2 3 4 5 6 7},
+         :queen-locs #{[6 5] [4 4] [1 2]}}
+        [[. . . . . . . .]
+         [. . . . . . . .]
+         [. Q . . . . . .]
+         [. . . . . . . .]
+         [. . . . Q . . .]
+         [. . . . . . Q .]
+         [. . . . . . . .]
+         [. . . . . . . .]]
+        false
+        true]
 
-  ((fn [b k v]
-     (any? ((-> b k) v)))
-   {:size       8,
-    :rows       #{0 1 3 6 7},
-    :cols       #{0 2 3 5 7},
-    :xy-diag    #{0 1 2 4 5 6 7 9 10 12 13 14},
-    :yx-diag    #{-7 -6 -5 -4 -3 -2 2 3 4 5 6 7},
-    :queen-locs #{[6 5] [4 4] [1 2]}}
-   :rows
-   5
-   )
 
-  (apply and [true false])
+  ;; safe-spaces
+  (-> (new-board 8)
+      (place-queen [1 2])
+      (place-queen [4 4])
+      (place-queen [6 5])
+      (safe-spaces)
+      ((juxt count
+             identity)))
+  #_=> => [12 [[2 0] [5 0] [7 0] [3 1] [5 1] [7 3] [0 6] [3 6] [0 7] [2 7] [3 7] [5 7]]]
 
-  (some?
-    ((-> {:size       8,
-          :rows       #{0 1 3 6 7},
-          :cols       #{0 2 3 5 7},
-          :xy-diag    #{0 1 2 4 5 6 7 9 10 12 13 14},
-          :yx-diag    #{-7 -6 -5 -4 -3 -2 2 3 4 5 6 7},
-          :queen-locs #{[6 5] [4 4] [1 2]}} :rows)
-     6))
+  (-> (new-board 8)
+      (safe-spaces)
+      count)
+  #_=> 64
 
+
+  ;; trial boards
+  (trial-boards (new-board 4))
+  #_=> '({:size 4, :rows #{1 2 3}, :cols #{1 2 3}, :xy-diag #{1 2 3 4 5 6}, :yx-diag #{-3 -2 -1 1 2 3}, :queen-locs #{[0 0]}}
+         {:size 4, :rows #{1 2 3}, :cols #{0 2 3}, :xy-diag #{0 2 3 4 5 6}, :yx-diag #{-3 -2 -1 0 2 3}, :queen-locs #{[1 0]}}
+         {:size 4, :rows #{1 2 3}, :cols #{0 1 3}, :xy-diag #{0 1 3 4 5 6}, :yx-diag #{-3 -2 -1 0 1 3}, :queen-locs #{[2 0]}}
+         {:size 4, :rows #{1 2 3}, :cols #{0 1 2}, :xy-diag #{0 1 2 4 5 6}, :yx-diag #{-3 -2 -1 0 1 2}, :queen-locs #{[3 0]}}
+         {:size 4, :rows #{0 2 3}, :cols #{1 2 3}, :xy-diag #{0 2 3 4 5 6}, :yx-diag #{-3 -2 0 1 2 3}, :queen-locs #{[0 1]}}
+         {:size 4, :rows #{0 2 3}, :cols #{0 2 3}, :xy-diag #{0 1 3 4 5 6}, :yx-diag #{-3 -2 -1 1 2 3}, :queen-locs #{[1 1]}}
+         {:size 4, :rows #{0 2 3}, :cols #{0 1 3}, :xy-diag #{0 1 2 4 5 6}, :yx-diag #{-3 -2 -1 0 2 3}, :queen-locs #{[2 1]}}
+         {:size 4, :rows #{0 2 3}, :cols #{0 1 2}, :xy-diag #{0 1 2 3 5 6}, :yx-diag #{-3 -2 -1 0 1 3}, :queen-locs #{[3 1]}}
+         {:size 4, :rows #{0 1 3}, :cols #{1 2 3}, :xy-diag #{0 1 3 4 5 6}, :yx-diag #{-3 -1 0 1 2 3}, :queen-locs #{[0 2]}}
+         {:size 4, :rows #{0 1 3}, :cols #{0 2 3}, :xy-diag #{0 1 2 4 5 6}, :yx-diag #{-3 -2 0 1 2 3}, :queen-locs #{[1 2]}}
+         {:size 4, :rows #{0 1 3}, :cols #{0 1 3}, :xy-diag #{0 1 2 3 5 6}, :yx-diag #{-3 -2 -1 1 2 3}, :queen-locs #{[2 2]}}
+         {:size 4, :rows #{0 1 3}, :cols #{0 1 2}, :xy-diag #{0 1 2 3 4 6}, :yx-diag #{-3 -2 -1 0 2 3}, :queen-locs #{[3 2]}}
+         {:size 4, :rows #{0 1 2}, :cols #{1 2 3}, :xy-diag #{0 1 2 4 5 6}, :yx-diag #{-2 -1 0 1 2 3}, :queen-locs #{[0 3]}}
+         {:size 4, :rows #{0 1 2}, :cols #{0 2 3}, :xy-diag #{0 1 2 3 5 6}, :yx-diag #{-3 -1 0 1 2 3}, :queen-locs #{[1 3]}}
+         {:size 4, :rows #{0 1 2}, :cols #{0 1 3}, :xy-diag #{0 1 2 3 4 6}, :yx-diag #{-3 -2 0 1 2 3}, :queen-locs #{[2 3]}}
+         {:size 4, :rows #{0 1 2}, :cols #{0 1 2}, :xy-diag #{0 1 2 3 4 5}, :yx-diag #{-3 -2 -1 1 2 3}, :queen-locs #{[3 3]}})
+
+
+  (-> (new-board 6)
+      (place-queen [2 3])
+      (place-queen [0 0])
+      (place-queen [5 4])
+      ((juxt trial-boards
+             #(drawn-board % (safe-spaces %)))))
+  #_=> [({:size       6,
+          :rows       #{2 5},
+          :cols       #{1 4},
+          :xy-diag    #{1 2 3 6 7 8 10},
+          :yx-diag    #{-5 -4 -3 -2 3 4 5},
+          :queen-locs #{[0 0] [2 3] [5 4] [3 1]}}
+         {:size       6,
+          :rows       #{1 5},
+          :cols       #{1 3},
+          :xy-diag    #{1 2 3 4 7 8 10},
+          :yx-diag    #{-5 -4 -3 -2 3 4 5},
+          :queen-locs #{[0 0] [2 3] [5 4] [4 2]}}
+         {:size       6,
+          :rows       #{1 2},
+          :cols       #{3 4},
+          :xy-diag    #{1 2 3 4 7 8 10},
+          :yx-diag    #{-5 -3 -2 2 3 4 5},
+          :queen-locs #{[0 0] [2 3] [5 4] [1 5]}}
+         {:size       6,
+          :rows       #{1 2},
+          :cols       #{1 4},
+          :xy-diag    #{1 2 3 4 6 7 10},
+          :yx-diag    #{-5 -4 -3 2 3 4 5},
+          :queen-locs #{[0 0] [2 3] [5 4] [3 5]}})
+        [[Q . . . . .]
+         [. . . * . .]
+         [. . . . * .]
+         [. . Q . . .]
+         [. . . . . Q]
+         [. * . * . .]]]
+
+  (->> (new-board 4)
+       dfs-nqueens-clean
+       (mapv (juxt identity
+                   drawn-board)))
+  #_=> [[{:size 4, :rows #{}, :cols #{}, :xy-diag #{0 3 6}, :yx-diag #{-3 0 3}, :queen-locs #{[1 0] [2 3] [0 2] [3 1]}}
+         [[. Q . .]
+          [. . . Q]
+          [Q . . .]
+          [. . Q .]]]
+        [{:size 4, :rows #{}, :cols #{}, :xy-diag #{0 3 6}, :yx-diag #{-3 0 3}, :queen-locs #{[1 3] [2 0] [3 2] [0 1]}}
+         [[. . Q .]
+          [Q . . .]
+          [. . . Q]
+          [. Q . .]]]]
+
+
+  (->> (new-board 6)
+       dfs-nqueens-clean
+       (mapv (juxt identity
+                   drawn-board)))
+  #_=> [[{:size       6,
+          :rows       #{},
+          :cols       #{},
+          :xy-diag    #{0 2 5 8 10},
+          :yx-diag    #{-5 -4 0 4 5},
+          :queen-locs #{[1 0] [5 2] [0 3] [2 4] [4 5] [3 1]}}
+         [[. Q . . . .]
+          [. . . Q . .]
+          [. . . . . Q]
+          [Q . . . . .]
+          [. . Q . . .]
+          [. . . . Q .]]]
+        [{:size       6,
+          :rows       #{},
+          :cols       #{},
+          :xy-diag    #{0 1 5 9 10},
+          :yx-diag    #{-5 -3 0 3 5},
+          :queen-locs #{[4 3] [5 1] [2 0] [0 4] [1 2] [3 5]}}
+         [[. . Q . . .]
+          [. . . . . Q]
+          [. Q . . . .]
+          [. . . . Q .]
+          [Q . . . . .]
+          [. . . Q . .]]]
+        [{:size       6,
+          :rows       #{},
+          :cols       #{},
+          :xy-diag    #{0 2 5 8 10},
+          :yx-diag    #{-5 -4 0 4 5},
+          :queen-locs #{[2 5] [5 4] [4 2] [3 0] [1 3] [0 1]}}
+         [[. . . Q . .]
+          [Q . . . . .]
+          [. . . . Q .]
+          [. Q . . . .]
+          [. . . . . Q]
+          [. . Q . . .]]]
+        [{:size       6,
+          :rows       #{},
+          :cols       #{},
+          :xy-diag    #{0 1 5 9 10},
+          :yx-diag    #{-5 -3 0 3 5},
+          :queen-locs #{[3 4] [5 3] [1 5] [0 2] [2 1] [4 0]}}
+         [[. . . . Q .]
+          [. . Q . . .]
+          [Q . . . . .]
+          [. . . . . Q]
+          [. . . Q . .]
+          [. Q . . . .]]]]
+
+  (time
+    (->> (new-board 8)
+         dfs-nqueens-clean
+         ((juxt #(->> (take-last 4 %)
+                      (mapv (juxt identity drawn-board)))
+                count))))
+  ;; "Elapsed time: 51525.088584 msecs"
+  #_=> [[[{:size       8,
+           :rows       #{},
+           :cols       #{},
+           :xy-diag    #{0 1 4 6 11 13 14},
+           :yx-diag    #{-7 -6 -5 3 4 5 6},
+           :queen-locs #{[1 1] [5 7] [6 4] [0 3] [4 5] [7 0] [2 6] [3 2]}}
+          [[. . . . . . . Q]
+           [. Q . . . . . .]
+           [. . . Q . . . .]
+           [Q . . . . . . .]
+           [. . . . . . Q .]
+           [. . . . Q . . .]
+           [. . Q . . . . .]
+           [. . . . . Q . .]]]
+         [{:size       8,
+           :rows       #{},
+           :cols       #{},
+           :xy-diag    #{0 1 3 8 10 13 14},
+           :yx-diag    #{-7 -6 -5 3 4 5 6},
+           :queen-locs #{[2 3] [1 1] [4 2] [6 5] [5 7] [3 6] [7 0] [0 4]}}
+          [[. . . . . . . Q]
+           [. Q . . . . . .]
+           [. . . . Q . . .]
+           [. . Q . . . . .]
+           [Q . . . . . . .]
+           [. . . . . . Q .]
+           [. . . Q . . . .]
+           [. . . . . Q . .]]]
+         [{:size       8,
+           :rows       #{},
+           :cols       #{},
+           :xy-diag    #{0 1 4 6 11 13 14},
+           :yx-diag    #{-7 -6 -5 3 4 5 6},
+           :queen-locs #{[6 6] [5 3] [1 4] [4 5] [7 0] [0 2] [2 1] [3 7]}}
+          [[. . . . . . . Q]
+           [. . Q . . . . .]
+           [Q . . . . . . .]
+           [. . . . . Q . .]
+           [. Q . . . . . .]
+           [. . . . Q . . .]
+           [. . . . . . Q .]
+           [. . . Q . . . .]]]
+         [{:size       8,
+           :rows       #{},
+           :cols       #{},
+           :xy-diag    #{0 1 3 8 10 13 14},
+           :yx-diag    #{-7 -6 -5 3 4 5 6},
+           :queen-locs #{[2 3] [5 4] [6 6] [4 7] [1 5] [7 0] [0 2] [3 1]}}
+          [[. . . . . . . Q]
+           [. . . Q . . . .]
+           [Q . . . . . . .]
+           [. . Q . . . . .]
+           [. . . . . Q . .]
+           [. Q . . . . . .]
+           [. . . . . . Q .]
+           [. . . . Q . . .]]]]
+        92]
   )
