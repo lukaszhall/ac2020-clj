@@ -90,11 +90,6 @@
      ))
   )
 
-(defn drawn-board
-  "Return a visual string representation of a board, with additional locations
-  marked by the additional location symbol"
-
-  )
 
 
 (defn place-queen
@@ -149,15 +144,11 @@
 (defn dfs-nqueens
   "dfs search with constraint prop "
   [board]
-  #_(println "-------")
-  #_(println (str "dfs-nqueens for " board))
   (if (= (count (:queen-locs board))
          (:size board))
     board
     (let [test-boards     (trial-boards board)
-          ;_               (spy-pp "Test Boards: " test-boards)
           searched-boards (map dfs-nqueens test-boards)]
-      #_(spy-pp "Searched Boards" searched-boards)
       searched-boards)))
 
 
@@ -208,7 +199,10 @@
   ;; Board
   (new-board 4)
   #_=> {:size       4,
-        :rows       #{0 1 2 3}, :cols #{0 1 2 3}, :xy-diag #{0 1 2 3 4 5 6}, :yx-diag #{-3 -2 -1 0 1 2 3},
+        :rows       #{0 1 2 3},
+        :cols       #{0 1 2 3},
+        :xy-diag    #{0 1 2 3 4 5 6},
+        :yx-diag    #{-3 -2 -1 0 1 2 3},
         :queen-locs #{}}
 
   (drawn-board {:size 8 :queen-locs #{[1 2] [5 4]}})
@@ -496,4 +490,26 @@
            [. . . . . . Q .]
            [. . . . Q . . .]]]]
         92]
+
+  (time
+    (loop [x 0]
+      (if (> x (* 1000 1000))
+        0
+        (recur (inc x)))))
+
+
+  (let [java-arr (make-array Integer/TYPE 4)]
+    (loop )
+    )
+
+  (make-array)
+
+  (time
+    (for [x (range 0 (* 1000 1000))]
+      )
+
+    )
+
+
+
   )
