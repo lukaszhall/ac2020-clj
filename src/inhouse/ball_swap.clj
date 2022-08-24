@@ -8,7 +8,7 @@
 ;For example, if I swap the cups at positions A and B, this can be represented as AB or BA.
 ;Examples
 ;swap-cups(["AB" "CA"]) ➞ "C"
-;
+;
 ;swap-cups(["AC" "CA", "CA", "AC"]) => "B"
 ;
 ;swap-cups(["BA" "AC", "CA", "BC"]) => "A"
@@ -30,7 +30,7 @@
 
 (defn next-path
   "Given a cup path, advance the path with the swap, else itself "
-  [swap-set cup-path]
+  [cup-path swap-set]
   (let [last-cup (last cup-path)
         next-cup (if (contains? swap-set last-cup)
                    (-> (disj swap-set last-cup)
@@ -40,7 +40,7 @@
 
 (defn next-paths
   [cup-paths swap-set]
-  (mapv (partial next-path swap-set)
+  (mapv #(next-path % swap-set)
         cup-paths))
 
 (defn full-paths
@@ -84,7 +84,8 @@
   (next-path [:A] #{:B :A})
   #_=> [:A :B]
 
-  (mapv #(next-path % [:A :B])
+
+  (mapv (partial next-path [:A :B])
         [#{:A :B}
          #{:A :C}
          #{:B :C}])
@@ -99,9 +100,10 @@
   (full-paths [#{:A :B} #{:A :C}])
   #_=> [[:A :B :B] [:B :A :C] [:C :C :A]]
 
-  (mapv full-paths
-        (mapv parse-cup-swaps sample-data))
-  #_=> [[[:A :B :B] [:B :A :C] [:C :C :A]]
+  (->> sample-data
+       (mapv parse-cup-swaps)
+       (mapv full-paths))
+  #_=> [[[:B:A :B] [:B :A :C] [:C :C :A]]
         [[:A :C :A :C :A] [:B :B :B :B :B] [:C :A :C :A :C]]
         [[:A :B :B :B :C] [:B :A :C :A :A] [:C :C :A :C :B]]]
 
@@ -121,7 +123,6 @@
   #_=> {["AB" "CA"]           :C,
         ["AC" "CA" "CA" "AC"] :B,
         ["BA" "AC" "CA" "BC"] :A}
-
 
   )
 

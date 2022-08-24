@@ -62,7 +62,8 @@
                    :l :l)]
     (filter #(= deaf-dir %) rat-dir-s)))
 
-(filter (partial deaf-rats :l) left-rats)
+
+#_(filter (partial deaf-rats :l) left-rats)
 
 (comment
 
