@@ -1,5 +1,7 @@
 (ns ac2020-clj.day2
-  (:require [ac2020-clj.util :as util]))
+  (:require [ac2020-clj.util :as util]
+            [clojure.string :as str]))
+
 
 ;; Sample input seq (db entry strings)
 (util/file-as-seq "day2/input_sample.txt")
@@ -16,7 +18,8 @@
      :password   password}))
 
 (defn valid-password?
-  [{:as db-entry :keys [letter-min letter-max letter password]}]
+  [{:as _db-entry
+    :keys [letter-min letter-max letter password]}]
   (let [letter-count (-> (frequencies password)
                          (get letter)
                          (or 0))]
@@ -35,7 +38,7 @@
 
 (defn db-entry->db-positional-entry
   "Remap to naming scheme for part 2"
-  [{:as db-entry :keys [letter-min letter-max letter password]}]
+  [{:as _db-entry :keys [letter-min letter-max letter password]}]
   {:first-idx  (dec letter-min)
    :second-idx (dec letter-max)
    :letter     letter
@@ -43,7 +46,7 @@
 
 
 (defn valid-positional-password?
-  [{:as db-positional-entry :keys [first-idx second-idx letter password]}]
+  [{:as _db-positional-entry :keys [first-idx second-idx letter password]}]
   (let [either-or            not=
         char-at-idx-matches? (fn [idx] (= (nth password idx)
                                           letter))]
