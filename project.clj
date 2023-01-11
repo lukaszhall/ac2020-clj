@@ -12,14 +12,22 @@
 
                  [io.github.nextjournal/clerk "0.5.346"]
 
+                 ; Dep Injection
+                 [mount "0.1.16"]
+                 [tolitius/mount-up "0.1.2"]
+
+                 ; Utility libs
+                 [dev.weavejester/medley "1.5.0"]
+                 [com.taoensso/encore "3.45.0"]
+
                  ]
   :main ^:skip-aot ac2020-clj.core
   :target-path "target/%s"
 
-  ;:mirrors {"central" {:name "Central"
-  ;                     :url  "https://repository.walmart.com/content/groups/public/"}
-  ;          "clojars" {:name         "Internal nexus Clojars"
-  ;                     :url          "https://repository.walmart.com/content/repositories/clojars/"
-  ;                     :repo-manager true}}
+  :mirrors {"central" {:name "Central"
+                       :url  "https://repository.walmart.com/content/groups/public/"}
+            "clojars" {:name         "Internal nexus Clojars"
+                       :url          "https://repository.walmart.com/content/repositories/clojars/"
+                       :repo-manager true}}
 
   :profiles {:uberjar {:aot :all}})
