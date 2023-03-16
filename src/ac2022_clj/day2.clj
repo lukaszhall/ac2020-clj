@@ -105,14 +105,14 @@
   "Convert [opp-shape result] to [opp-shape your-shape]"
   [[opp-shape result]]
   (case result
-        :loss
-        [opp-shape (-> (shape->losing-shapes opp-shape) first)]
+    :loss
+    [opp-shape (-> (shape->losing-shapes opp-shape) first)]
 
-        :win
-        [opp-shape (-> (shape->winning-shapes opp-shape) first)]
+    :win
+    [opp-shape (-> (shape->winning-shapes opp-shape) first)]
 
-        :draw
-        [opp-shape opp-shape]))
+    :draw
+    [opp-shape opp-shape]))
 
 (defn result-guide->shape-guide
   [result-strat-s]
@@ -190,6 +190,5 @@
        (add-scores [shape-scores result-scores])
        (apply +))
   #_=> 12429
-
 
   )
