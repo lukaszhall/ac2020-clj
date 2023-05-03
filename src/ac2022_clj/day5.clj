@@ -115,22 +115,20 @@
   Moves 'cnt' blocks all at once 'from'  1 indexed column
   'to' another 1 indexed column in the stack"
   [{:keys [from to cnt] :as procedure} stack]
-  (if (= cnt 0)
-    stack
-    (let [from-idx  (dec from)
-          to-idx    (dec to)
-          boxes     (->> (get stack from-idx)
-                         (take-last cnt))
-          from-col  (->> (get stack from-idx)
-                         (drop-last cnt)
-                         (vec))
-          to-col    (-> (get stack to-idx)
-                        (concat boxes)
-                        (vec))
-          new-stack (-> stack
-                        (assoc from-idx from-col)
-                        (assoc to-idx to-col))]
-      new-stack)))
+  (let [from-idx  (dec from)
+        to-idx    (dec to)
+        boxes     (->> (get stack from-idx)
+                       (take-last cnt))
+        from-col  (->> (get stack from-idx)
+                       (drop-last cnt)
+                       (vec))
+        to-col    (-> (get stack to-idx)
+                      (concat boxes)
+                      (vec))
+        new-stack (-> stack
+                      (assoc from-idx from-col)
+                      (assoc to-idx to-col))]
+    new-stack))
 
 
 
@@ -215,21 +213,19 @@
          {:stack [["Z" "N" "D"] ["M" "C"] ["P"]], :procedures ({:cnt 3, :from 1, :to 3} {:cnt 2, :from 2, :to 1} {:cnt 1, :from 1, :to 2})}
          {:stack [["Z" "N"] ["M" "C" "D"] ["P"]], :procedures [{:cnt 1, :from 2, :to 1} {:cnt 3, :from 1, :to 3} {:cnt 2, :from 2, :to 1} {:cnt 1, :from 1, :to 2}]})
 
+
+  Ø(def final-state first)
+
   ;; Part 1
   (->> (util/file-as-seq "ac2022/day5/input.txt")
        parse-stack-and-procedure
        ((partial iterate-procedures move-blocks))
-       first
+       final-state
        :stack
        (map last)
        (apply str))
   #_=> "NTWZZWHFV"
 
-  (->> (take-last 2 [1 2 3 4])
-       (concat [0 0 0])
-       (vec))
-
-  (drop-last 2 [1 2 3 4])
 
   ;; Part 2
   (move-blocks-atomically {:cnt 2, :from 2, :to 1}
